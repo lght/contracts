@@ -1,6 +1,6 @@
 pragma solidity ^0.4.15;
 
-import "./interfaces/RelaySet.sol";
+import "./base/RelaySet.sol";
 import "./libraries/AddressVotes.sol";
 
 // Existing validators can give support to addresses.

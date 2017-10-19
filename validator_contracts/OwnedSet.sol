@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
-import "./interfaces/Owned.sol";
-import "./interfaces/ValidatorSet.sol";
+import "./base/Owned.sol";
+import "./base/ValidatorSet.sol";
 
 // Owner can add or remove validators.
 

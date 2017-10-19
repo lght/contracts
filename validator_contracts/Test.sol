@@ -1,6 +1,6 @@
 pragma solidity ^0.4.6;
 
-import "./interfaces/ValidatorSet.sol";
+import "./base/ValidatorSet.sol";
 
 // Basic contract used for testing the validator set.
 contract Test is ValidatorSet {
