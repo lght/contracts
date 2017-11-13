@@ -1,10 +1,11 @@
 //! Copyright Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
 
-pragma solidity ^0.4.7;
+/// Compiler 0.4.11 needed for `transfer()`
+pragma solidity ^0.4.11;
 
 /// Stripped down ERC20 standard token interface.
-contract Token {
+interface Token {
 	function transfer(address _to, uint256 _value) returns (bool success);
 }
 
@@ -54,13 +55,15 @@ contract DutchAuction {
 		// if we've asked for too many, send back the extra.
 		if (tokens > tokensAvailable()) {
 			refund = (tokens - tokensAvailable()) * price;
-			if (!msg.sender.send(refund)) throw;
+            // Should change to withdrawal pattern w/ refunds[address bidder]
+            refundBalances[msg.sender] = refund;
 			tokens = tokensAvailable();
 			accepted -= refund;
 		}
 
 		// send rest to treasury
-		if (!treasury.send(accepted)) throw;
+        // change to withdrawal pattern w/ treasuryBalance[address treasury]
+        treasuryBalance[treasury] += accepted;
 
 		// record the acceptance.
 		participants[msg.sender] += accepted;
@@ -72,11 +75,47 @@ contract DutchAuction {
 		Buyin(msg.sender, price, accepted, refund);
 	}
 
+    function withdrawRefund(address _who)
+		only_participants(_who)
+        public
+    {
+        require(refundBalances[_who] > 0);
+
+        uint ref = refundBalances[_who];
+        refundBalances[_who] = 0;
+        require(msg.sender.transfer(ref));
+    }
+
+    function withdrawTokens(address _who)
+        only_participants(_who)
+        when_all_finalised
+        public
+    {
+        assert(tokenBalances[_who] > 0);
+
+        uint tk = tokenBalances[_who];
+        tokenBalances[_who] = 0;
+        require(_who.transfer(tk));
+    }
+
+    function treasuryWithdrawal(address _treasury)
+        only_treasury
+        public
+    {
+        require(treasuryBalance[_treasury] > 0);
+
+        uint ref = refundBalances[_treasury];
+        refundBalances[_treasury] = 0;
+        require(_treasury.transfer(ref));
+    } 
+
+
 	/// Mint tokens for a particular participant.
 	function finalise(address _who)
 		when_not_halted
 		when_ended
 		only_participants(_who)
+        public
 	{
 		// end the auction if we're the first one to finalise.
 		if (endPrice == 0) {
@@ -89,7 +128,8 @@ contract DutchAuction {
 		uint refund = participants[_who] - endPrice * tokens;
 		totalFinalised += participants[_who];
 		participants[_who] = 0;
-		if (!tokenContract.transfer(_who, tokens)) throw;
+        // change to withdrawal pattern w/ tokenBalances[address _who]
+        tokenBalances[_who] = tokens;
 
 		Finalised(_who, tokens);
 
@@ -102,7 +142,7 @@ contract DutchAuction {
 	function setHalted(bool _halted) only_admin { halted = _halted; }
 
 	/// Emergency function to drain the contract of any funds.
-	function drain() only_admin { if (!treasury.send(this.balance)) throw; }
+	function drain() only_admin { require(treasury.transfer(this.balance)); }
 
 	/// Kill this contract once the sale is finished.
 	function kill() when_all_finalised { suicide(admin); }
@@ -133,30 +173,36 @@ contract DutchAuction {
 	function allFinalised() constant returns (bool) { return now >= endTime && totalReceived == totalFinalised; }
 
 	/// Ensure the sale is ongoing.
-	modifier when_active { if (isActive()) _; else throw; }
+	modifier when_active { assert(isActive()); }
 
 	/// Ensure the sale is ended.
-	modifier when_ended { if (now >= endTime) _; else throw; }
+	modifier when_ended { require(now >= endTime); }
 
 	/// Ensure we're not halted.
-	modifier when_not_halted { if (!halted) _; else throw; }
+	modifier when_not_halted { assert(!halted); }
 
 	/// Ensure all participants have finalised.
-	modifier when_all_finalised { if (allFinalised()) _; else throw; }
+	modifier when_all_finalised { require(allFinalised()); }
 
 	/// Ensure the sender sent a sensible amount of ether.
-	modifier avoid_dust { if (msg.value >= DUST_LIMIT) _; else throw; }
+	modifier avoid_dust { require(msg.value >= DUST_LIMIT); }
 
 	/// Ensure `_who` is a participant.
-	modifier only_participants(address _who) { if (participants[_who] != 0) _; else throw; }
+	modifier only_participants(address _who) { require(participants[_who] != 0); }
 
 	/// Ensure sender is admin.
-	modifier only_admin { if (msg.sender == admin) _; else throw; }
+	modifier only_admin { require(msg.sender == admin); }
+
+    /// Ensure sender is treasury
+	modifier only_treasury { require(msg.sender == treasury); }
 
 	// State:
 
 	/// The auction participants.
 	mapping (address => uint) public participants;
+    mapping (address => uint) public refundBalances;
+    mapping (address => uint) public tokenBalances;
+    mapping (address => uint) public treasuryBalance;
 
 	/// Total amount of ether received.
 	uint public totalReceived = 0;
