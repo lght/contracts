@@ -43,6 +43,7 @@ contract DutchAuction {
 	/// funds if they would end the sale.
 	function()
 		payable
+        public
 		when_not_halted
 		when_active
 		avoid_dust
@@ -55,14 +56,17 @@ contract DutchAuction {
 		// if we've asked for too many, send back the extra.
 		if (tokens > tokensAvailable()) {
 			refund = (tokens - tokensAvailable()) * price;
-            // Should change to withdrawal pattern w/ refunds[address bidder]
+
+            // add refund to sender's balance
+            // withdraw using withdrawRefund(address _who)
             refundBalances[msg.sender] = refund;
+
 			tokens = tokensAvailable();
 			accepted -= refund;
 		}
 
 		// send rest to treasury
-        // change to withdrawal pattern w/ treasuryBalance[address treasury]
+        // withdraw using treasuryWithdrawal(address _treasury)
         treasuryBalance[treasury] += accepted;
 
 		// record the acceptance.
@@ -83,7 +87,7 @@ contract DutchAuction {
 
         uint ref = refundBalances[_who];
         refundBalances[_who] = 0;
-        require(msg.sender.transfer(ref));
+        require(_who.transfer(ref));
     }
 
     function withdrawTokens(address _who)
@@ -128,7 +132,7 @@ contract DutchAuction {
 		uint refund = participants[_who] - endPrice * tokens;
 		totalFinalised += participants[_who];
 		participants[_who] = 0;
-        // change to withdrawal pattern w/ tokenBalances[address _who]
+        // change to withdrawal pattern w/ withdawTokens(address _who) 
         tokenBalances[_who] = tokens;
 
 		Finalised(_who, tokens);
@@ -173,28 +177,60 @@ contract DutchAuction {
 	function allFinalised() constant returns (bool) { return now >= endTime && totalReceived == totalFinalised; }
 
 	/// Ensure the sale is ongoing.
-	modifier when_active { assert(isActive()); }
+	modifier when_active
+    {
+        require(isActive());
+        _;
+    }
 
 	/// Ensure the sale is ended.
-	modifier when_ended { require(now >= endTime); }
+	modifier when_ended
+    {
+        require(now >= endTime);
+        _;
+    }
 
 	/// Ensure we're not halted.
-	modifier when_not_halted { assert(!halted); }
+	modifier when_not_halted
+    {
+        assert(!halted);
+        _;
+    }
 
 	/// Ensure all participants have finalised.
-	modifier when_all_finalised { require(allFinalised()); }
+	modifier when_all_finalised
+    {
+        require(allFinalised());
+        _;
+    }
 
 	/// Ensure the sender sent a sensible amount of ether.
-	modifier avoid_dust { require(msg.value >= DUST_LIMIT); }
+	modifier avoid_dust
+    {
+        require(msg.value >= DUST_LIMIT);
+        _;
+    }
 
 	/// Ensure `_who` is a participant.
-	modifier only_participants(address _who) { require(participants[_who] != 0); }
+	modifier only_participants(address _who)
+    {
+        require(participants[_who] != 0);
+        _;
+    }
 
 	/// Ensure sender is admin.
-	modifier only_admin { require(msg.sender == admin); }
+	modifier only_admin
+    {
+        require(msg.sender == admin);
+        _;
+    }
 
     /// Ensure sender is treasury
-	modifier only_treasury { require(msg.sender == treasury); }
+	modifier only_treasury
+    {
+        require(msg.sender == treasury);
+        _;
+    }
 
 	// State:
 
