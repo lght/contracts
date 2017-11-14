@@ -56,11 +56,9 @@ contract DutchAuction {
 		// if we've asked for too many, send back the extra.
 		if (tokens > tokensAvailable()) {
 			refund = (tokens - tokensAvailable()) * price;
-
             // add refund to sender's balance
             // withdraw using withdrawRefund(address _who)
             refundBalances[msg.sender] = refund;
-
 			tokens = tokensAvailable();
 			accepted -= refund;
 		}
@@ -132,7 +130,8 @@ contract DutchAuction {
 		uint refund = participants[_who] - endPrice * tokens;
 		totalFinalised += participants[_who];
 		participants[_who] = 0;
-        // change to withdrawal pattern w/ withdawTokens(address _who) 
+        // changed to withdraw pattern
+        // use withdawTokens(address _who) 
         tokenBalances[_who] = tokens;
 
 		Finalised(_who, tokens);
