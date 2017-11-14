@@ -1,25 +1,6 @@
-pragma solidity ^0.4.7;
+pragma solidity ^0.4.17;
 
-contract OperationsFace {
-	function proposeTransaction(bytes32 _txid, address _to, bytes _data, uint _value, uint _gas) returns (uint txSuccess);
-	function confirmTransaction(bytes32 _txid) returns (uint txSuccess);
-	function rejectTransaction(bytes32 _txid);
-	function proposeFork(uint32 _number, bytes32 _name, bool _hard, bytes32 _spec);
-	function acceptFork();
-	function rejectFork();
-	function setClientOwner(address _newOwner);
-	function addRelease(bytes32 _release, uint32 _forkBlock, uint8 _track, uint24 _semver, bool _critical);
-	function addChecksum(bytes32 _release, bytes32 _platform, bytes32 _checksum);
-
-	function isLatest(bytes32 _client, bytes32 _release) constant returns (bool);
-	function track(bytes32 _client, bytes32 _release) constant returns (uint8);
-	function latestInTrack(bytes32 _client, uint8 _track) constant returns (bytes32);
-	function build(bytes32 _client, bytes32 _checksum) constant returns (bytes32 o_release, bytes32 o_platform);
-	function release(bytes32 _client, bytes32 _release) constant returns (uint32 o_forkBlock, uint8 o_track, uint24 o_semver, bool o_critical);
-	function checksum(bytes32 _client, bytes32 _release, bytes32 _platform) constant returns (bytes32);
-
-	function clientOwner(address _owner) constant returns (bytes32);
-}
+import "./interfaces/OperationsFace.sol";
 
 /// Specialise proxy wallet. Owner can send transactions unhindered. Delegates
 /// can send only particular transactions to a named Operations contract.
