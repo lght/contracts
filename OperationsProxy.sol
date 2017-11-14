@@ -1,11 +1,13 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.11;
 
 import "./interfaces/OperationsFace.sol";
 
 /// Specialise proxy wallet. Owner can send transactions unhindered. Delegates
 /// can send only particular transactions to a named Operations contract.
 contract OperationsProxy {
-    function OperationsProxy(address _owner, address _stable, address _beta, address _nightly, address _stableConfirmer, address _betaConfirmer, address _nightlyConfirmer, address _operations) {
+    function OperationsProxy(address _owner, address _stable, address _beta, address _nightly, address _stableConfirmer, address _betaConfirmer, address _nightlyConfirmer, address _operations)
+        internal
+    {
         owner = _owner;
         delegate[1] = _stable;
         delegate[2] = _beta;
@@ -26,31 +28,49 @@ contract OperationsProxy {
 	event RequestConfirmed(uint8 indexed track, bytes32 hash);
 	event RequestRejected(uint8 indexed track, bytes32 hash);
 
-	function() only_owner {
+	function()
+        public
+        only_owner
+    {
 	    relay();
 	}
 
-	function send(address _to, uint _value, bytes _data) only_owner payable {
-		if (!_to.call.value(_value)(_data)) throw;
+	function send(address _to, uint _value, bytes _data)
+        payable
+        public
+        only_owner
+    {
+		require(_to.call.value(_value)(_data));
 		Sent(_to, _value, _data);
 	}
 
-	function setOwner(address _owner) only_owner {
+	function setOwner(address _owner)
+        public
+        only_owner
+    {
 	    OwnerChanged(owner, _owner);
 	    owner = _owner;
 	}
 
-	function setDelegate(address _delegate, uint8 _track) only_owner {
+	function setDelegate(address _delegate, uint8 _track)
+        public
+        only_owner
+    {
 	    DelegateChanged(delegate[_track], _delegate, _track);
 	    delegate[_track] = _delegate;
 	}
 
-	function setConfirmer(address _confirmer, uint8 _track) only_owner {
+	function setConfirmer(address _confirmer, uint8 _track)
+        public
+        only_owner
+    {
 	    ConfirmerChanged(confirmer[_track], _confirmer, _track);
 	    confirmer[_track] = _confirmer;
 	}
 
-	function addRelease(bytes32 _release, uint32 _forkBlock, uint8 _track, uint24 _semver, bool _critical) {
+	function addRelease(bytes32 _release, uint32 _forkBlock, uint8 _track, uint24 _semver, bool _critical)
+        public
+    {
 	    if (relayOrConfirm(_track))
 	        AddReleaseRelayed(_track, _release);
 	    else
@@ -65,7 +85,11 @@ contract OperationsProxy {
 	        AddChecksumRelayed(_release, _platform);
 	}
 
-	function relayOrConfirm(uint8 _track) internal only_delegate_of_track(_track) returns (bool) {
+	function relayOrConfirm(uint8 _track)
+        internal
+        only_delegate_of_track(_track)
+        returns (bool)
+    {
 	    if (confirmer[_track] != 0) {
 	        var h = sha3(msg.data);
 	        waiting[_track][h] = msg.data;
@@ -78,32 +102,63 @@ contract OperationsProxy {
 	    }
 	}
 
-	function confirm(uint8 _track, bytes32 _hash) only_confirmer_of_track(_track) payable {
-	    if (!address(operations).call.value(msg.value)(waiting[_track][_hash])) throw;
+	function confirm(uint8 _track, bytes32 _hash)
+        payable
+        public
+        only_confirmer_of_track(_track)
+    {
+        var waiting_hash = waiting[_track][_hash];
 	    delete waiting[_track][_hash];
 	    RequestConfirmed(_track, _hash);
+
+	    require(address(operations).call.value(msg.value)(waiting_hash));
 	}
 
-	function reject(uint8 _track, bytes32 _hash) only_confirmer_of_track(_track) {
+	function reject(uint8 _track, bytes32 _hash)
+        public
+        only_confirmer_of_track(_track) 
+    {
 	    delete waiting[_track][_hash];
 	    RequestRejected(_track, _hash);
 	}
 
-	function relay() internal {
-	    if (!address(operations).call.value(msg.value)(msg.data)) throw;
+	function relay()
+        internal
+    {
+	    require(address(operations).call.value(msg.value)(msg.data));
 	}
 
-	function cleanupRelease(bytes32 _release) only_confirmer_of_track(trackOfPendingRelease[_release]) {
+	function cleanupRelease(bytes32 _release)
+        public
+        only_confirmer_of_track(trackOfPendingRelease[_release])
+    {
 	    delete trackOfPendingRelease[_release];
 	}
 
-	function kill() only_owner {
+	function kill()
+        public
+        only_owner
+    {
 	    suicide(msg.sender);
 	}
 
-	modifier only_owner { if (msg.sender != owner) throw; _; }
-	modifier only_delegate_of_track(uint8 track) { if (delegate[track] != msg.sender) throw; _; }
-	modifier only_confirmer_of_track(uint8 track) { if (confirmer[track] != msg.sender) throw; _; }
+    /// Modifiers
+
+	modifier only_owner
+    {
+        require(msg.sender == owner);
+        _;
+    }
+	modifier only_delegate_of_track(uint8 track)
+    {   
+        require(delegate[track] == msg.sender);
+        _;
+    }
+	modifier only_confirmer_of_track(uint8 track)
+    { 
+        require(confirmer[track] == msg.sender);
+        _;
+    }
 
     address public owner;
     mapping(uint8 => address) public delegate;
