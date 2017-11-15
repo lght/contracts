@@ -78,7 +78,7 @@ contract Operations is OperationsFace {
 	function Operations() 
 		internal
 	{
-	    // Is this constructor automatically called on deployment?
+		// Is this constructor automatically called on deployment?
 /*		// Mainnet
 		fork[0] = Fork("frontier", keccak256("frontier"), true, true, 0);
 		fork[1150000] = Fork("homestead", keccak256("homestead"), true, true, 0);
@@ -102,9 +102,9 @@ contract Operations is OperationsFace {
 
 	function proposeTransaction(bytes32 _txid, address _to, bytes _data, uint _value, uint _gas)
 		public
-	    only_required_client_owner
-	    only_when_no_proxy(_txid)
-	    returns (uint txSuccess)
+		only_required_client_owner
+		only_when_no_proxy(_txid)
+		returns (uint txSuccess)
 	{
 		var client = clientOwner[msg.sender];
 		proxy[_txid] = Transaction(1, _to, _data, _value, _gas);
@@ -117,10 +117,10 @@ contract Operations is OperationsFace {
 
 	function confirmTransaction(bytes32 _txid) 
 		public
-	    only_required_client_owner
-	    only_when_proxy(_txid)
-	    only_when_proxy_undecided(_txid) 
-	    returns (uint txSuccess) 
+		only_required_client_owner
+		only_when_proxy(_txid)
+		only_when_proxy_undecided(_txid) 
+		returns (uint txSuccess) 
 	{
 		var client = clientOwner[msg.sender];
 		proxy[_txid].status[client] = Status.Accepted;
@@ -132,33 +132,33 @@ contract Operations is OperationsFace {
 	}
 
 	function rejectTransaction(bytes32 _txid)
-	    public
+		public
 		only_required_client_owner
-	    only_when_proxy(_txid)
-	    only_when_proxy_undecided(_txid)
+		only_when_proxy(_txid)
+		only_when_proxy_undecided(_txid)
 	{
 		delete proxy[_txid];
 
-	    // log transaction rejection
+		// log transaction rejection
 		TransactionRejected(clientOwner[msg.sender], _txid);
 	}
 
 	function proposeFork(uint32 _number, bytes32 _name, bool _hard, bytes32 _spec)
 		public
-	    only_client_owner
-	    only_when_none_proposed
+		only_client_owner
+		only_when_none_proposed
 	{
 		fork[_number] = Fork(_name, _spec, _hard, false, 0);
 		proposedFork = _number;
 
-	    // log fork proposal
+		// log fork proposal
 		ForkProposed(clientOwner[msg.sender], _number, _name, _spec, _hard);
 	}
 
 	function acceptFork()
-	    public
+		public
 		only_when_proposed
-	    only_undecided_client_owner
+		only_undecided_client_owner
 	{
 		var newClient = clientOwner[msg.sender];
 		fork[proposedFork].status[newClient] = Status.Accepted;
@@ -167,10 +167,10 @@ contract Operations is OperationsFace {
 	}
 
 	function rejectFork()
-	    public
+		public
 		only_when_proposed
-	    only_undecided_client_owner
-	    only_unratified
+		only_undecided_client_owner
+		only_unratified
 	{
 		var newClient = clientOwner[msg.sender];
 		fork[proposedFork].status[newClient] = Status.Rejected;
@@ -180,7 +180,7 @@ contract Operations is OperationsFace {
 
 	function setClientOwner(address _newOwner)
 		public
-	    only_client_owner
+		only_client_owner
 	{
 		var newClient = clientOwner[msg.sender];
 		clientOwner[msg.sender] = bytes32(0);
@@ -201,7 +201,7 @@ contract Operations is OperationsFace {
 
 	function addChecksum(bytes32 _release, bytes32 _platform, bytes32 _checksum)
 		public
-	    only_client_owner
+		only_client_owner
 	{
 		var newClient = clientOwner[msg.sender];
 		client[newClient].build[_checksum] = Build(_release, _platform);
@@ -222,7 +222,7 @@ contract Operations is OperationsFace {
 
 	function removeClient(bytes32 _client)
 		public
-	    only_owner
+		only_owner
 	{
 		setClientRequired(_client, false);
 		resetClientOwner(_client, 0);
@@ -343,7 +343,7 @@ contract Operations is OperationsFace {
 		fork[proposedFork].ratified = true;
 		latestFork = proposedFork;
 		proposedFork = 0;
-	    
+
 		// log fork ratification
 		ForkRatified(proposedFork);
 	}
