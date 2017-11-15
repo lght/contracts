@@ -18,5 +18,5 @@ interface OperationsFace {
 	function release(bytes32 _client, bytes32 _release) constant public returns (uint32 o_forkBlock, uint8 o_track, uint24 o_semver, bool o_critical);
 	function checksum(bytes32 _client, bytes32 _release, bytes32 _platform) constant public returns (bytes32);
 
-    function clientOwner(address _owner) constant public returns (bytes32);
+	function clientOwner(address _owner) constant public returns (bytes32);
 }
