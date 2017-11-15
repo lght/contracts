@@ -74,11 +74,11 @@ contract Operations is OperationsFace {
 	event ClientRequiredChanged(bytes32 indexed client, bool now);
 	event OwnerChanged(address old, address now);
 
-    /// Mark constructor internal to keep it from being called by external contracts
+	/// Mark constructor internal to keep it from being called by external contracts
 	function Operations() 
 		internal
-    {
-        // Is this constructor automatically called on deployment?
+	{
+	    // Is this constructor automatically called on deployment?
 /*		// Mainnet
 		fork[0] = Fork("frontier", keccak256("frontier"), true, true, 0);
 		fork[1150000] = Fork("homestead", keccak256("homestead"), true, true, 0);
@@ -102,10 +102,10 @@ contract Operations is OperationsFace {
 
 	function proposeTransaction(bytes32 _txid, address _to, bytes _data, uint _value, uint _gas)
 		public
-        only_required_client_owner
-        only_when_no_proxy(_txid)
-        returns (uint txSuccess)
-    {
+	    only_required_client_owner
+	    only_when_no_proxy(_txid)
+	    returns (uint txSuccess)
+	{
 		var client = clientOwner[msg.sender];
 		proxy[_txid] = Transaction(1, _to, _data, _value, _gas);
 		proxy[_txid].status[client] = Status.Accepted;
@@ -117,11 +117,11 @@ contract Operations is OperationsFace {
 
 	function confirmTransaction(bytes32 _txid) 
 		public
-        only_required_client_owner
-        only_when_proxy(_txid)
-        only_when_proxy_undecided(_txid) 
-        returns (uint txSuccess) 
-    {
+	    only_required_client_owner
+	    only_when_proxy(_txid)
+	    only_when_proxy_undecided(_txid) 
+	    returns (uint txSuccess) 
+	{
 		var client = clientOwner[msg.sender];
 		proxy[_txid].status[client] = Status.Accepted;
 		proxy[_txid].requiredCount += 1;
@@ -132,34 +132,34 @@ contract Operations is OperationsFace {
 	}
 
 	function rejectTransaction(bytes32 _txid)
-        public
+	    public
 		only_required_client_owner
-        only_when_proxy(_txid)
-        only_when_proxy_undecided(_txid)
-    {
+	    only_when_proxy(_txid)
+	    only_when_proxy_undecided(_txid)
+	{
 		delete proxy[_txid];
 
-        // log transaction rejection
+	    // log transaction rejection
 		TransactionRejected(clientOwner[msg.sender], _txid);
 	}
 
 	function proposeFork(uint32 _number, bytes32 _name, bool _hard, bytes32 _spec)
 		public
-        only_client_owner
-        only_when_none_proposed
-    {
+	    only_client_owner
+	    only_when_none_proposed
+	{
 		fork[_number] = Fork(_name, _spec, _hard, false, 0);
 		proposedFork = _number;
 
-        // log fork proposal
+	    // log fork proposal
 		ForkProposed(clientOwner[msg.sender], _number, _name, _spec, _hard);
 	}
 
 	function acceptFork()
-        public
+	    public
 		only_when_proposed
-        only_undecided_client_owner
-    {
+	    only_undecided_client_owner
+	{
 		var newClient = clientOwner[msg.sender];
 		fork[proposedFork].status[newClient] = Status.Accepted;
 		ForkAcceptedBy(newClient, proposedFork);
@@ -167,11 +167,11 @@ contract Operations is OperationsFace {
 	}
 
 	function rejectFork()
-        public
+	    public
 		only_when_proposed
-        only_undecided_client_owner
-        only_unratified
-    {
+	    only_undecided_client_owner
+	    only_unratified
+	{
 		var newClient = clientOwner[msg.sender];
 		fork[proposedFork].status[newClient] = Status.Rejected;
 		ForkRejectedBy(newClient, proposedFork);
@@ -180,8 +180,8 @@ contract Operations is OperationsFace {
 
 	function setClientOwner(address _newOwner)
 		public
-        only_client_owner
-    {
+	    only_client_owner
+	{
 		var newClient = clientOwner[msg.sender];
 		clientOwner[msg.sender] = bytes32(0);
 		clientOwner[_newOwner] = newClient;
@@ -192,7 +192,7 @@ contract Operations is OperationsFace {
 	function addRelease(bytes32 _release, uint32 _forkBlock, uint8 _track, uint24 _semver, bool _critical)
 		public
 		only_client_owner
-    {
+	{
 		var newClient = clientOwner[msg.sender];
 		client[newClient].release[_release] = Release(_forkBlock, _track, _semver, _critical);
 		client[newClient].current[_track] = _release;
@@ -201,8 +201,8 @@ contract Operations is OperationsFace {
 
 	function addChecksum(bytes32 _release, bytes32 _platform, bytes32 _checksum)
 		public
-        only_client_owner
-    {
+	    only_client_owner
+	{
 		var newClient = clientOwner[msg.sender];
 		client[newClient].build[_checksum] = Build(_release, _platform);
 		client[newClient].release[_release].checksum[_platform] = _checksum;
@@ -214,7 +214,7 @@ contract Operations is OperationsFace {
 	function addClient(bytes32 _client, address _owner)
 		public
 		only_owner
-    {
+	{
 		client[_client].owner = _owner;
 		clientOwner[_owner] = _client;
 		ClientAdded(_client, _owner);
@@ -222,8 +222,8 @@ contract Operations is OperationsFace {
 
 	function removeClient(bytes32 _client)
 		public
-        only_owner
-    {
+	    only_owner
+	{
 		setClientRequired(_client, false);
 		resetClientOwner(_client, 0);
 		delete client[_client];
@@ -233,7 +233,7 @@ contract Operations is OperationsFace {
 	function resetClientOwner(bytes32 _client, address _newOwner)
 		public
 		only_owner
-    {
+	{
 		var old = client[_client].owner;
 		ClientOwnerChanged(_client, old, _newOwner);
 		clientOwner[old] = bytes32(0);
@@ -245,7 +245,7 @@ contract Operations is OperationsFace {
 		public
 		only_owner
 		when_changing_required(_client, _r)
-    {
+	{
 		ClientRequiredChanged(_client, _r);
 		client[_client].required = _r;
 		clientsRequired = _r ? clientsRequired + 1 : (clientsRequired - 1);
@@ -255,7 +255,7 @@ contract Operations is OperationsFace {
 	function setOwner(address _newOwner)
 		public
 		only_owner
-    {
+	{
 		OwnerChanged(grandOwner, _newOwner);
 		grandOwner = _newOwner;
 	}
@@ -266,7 +266,7 @@ contract Operations is OperationsFace {
 		constant
 		public
 		returns (bool)
-    {
+	{
 		return latestInTrack(_client, track(_client, _release)) == _release;
 	}
 
@@ -274,7 +274,7 @@ contract Operations is OperationsFace {
 		constant
 		public
 		returns (uint8)
-    {
+	{
 		return client[_client].release[_release].track;
 	}
 
@@ -282,7 +282,7 @@ contract Operations is OperationsFace {
 		constant
 		public
 		returns (bytes32)
-    {
+	{
 		return client[_client].current[_track];
 	}
 
@@ -290,7 +290,7 @@ contract Operations is OperationsFace {
 		constant
 		public
 		returns (bytes32 o_release, bytes32 o_platform)
-    {
+	{
 		var b = client[_client].build[_checksum];
 		o_release = b.release;
 		o_platform = b.platform;
@@ -300,7 +300,7 @@ contract Operations is OperationsFace {
 		constant
 		public
 		returns (uint32 o_forkBlock, uint8 o_track, uint24 o_semver, bool o_critical)
-    {
+	{
 		var b = client[_client].release[_release];
 		o_forkBlock = b.forkBlock;
 		o_track = b.track;
@@ -312,7 +312,7 @@ contract Operations is OperationsFace {
 		constant
 		public
 		returns (bytes32)
-    {
+	{
 		return client[_client].release[_release].checksum[_platform];
 	}
 
@@ -321,7 +321,7 @@ contract Operations is OperationsFace {
 	function noteAccepted(bytes32 _client)
 		internal
 		when_required(_client)
-    {
+	{
 		fork[proposedFork].requiredCount += 1;
 		ratifyFork();
 	}
@@ -329,22 +329,22 @@ contract Operations is OperationsFace {
 	function noteRejected(bytes32 _client)
 		internal 
 		when_required(_client)
-    {
+	{
 		ForkRejected(proposedFork);
 		delete fork[proposedFork];
 		proposedFork = 0;
 	}
 
-    // maybe change the name here, so it semantically matches the intent?
+	// maybe change the name here, so it semantically matches the intent?
 	function ratifyFork()
 		internal
 		when_have_all_required
-    {
+	{
 		fork[proposedFork].ratified = true;
 		latestFork = proposedFork;
 		proposedFork = 0;
-        
-        // log fork ratification
+	    
+		// log fork ratification
 		ForkRatified(proposedFork);
 	}
 
@@ -352,7 +352,7 @@ contract Operations is OperationsFace {
 		internal
 		when_proxy_confirmed(_txid)
 		returns (uint txSuccess)
-    {
+	{
 		var ptx = proxy[_txid];
 		delete proxy[_txid];
 		// TODO: refactor to use a push-pull pattern if possible
