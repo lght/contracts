@@ -43,10 +43,10 @@ contract DutchAuction {
 	/// funds if they would end the sale.
 	function()
 		payable
-        public
-		when_not_halted
-		when_active
-		avoid_dust
+	public
+	when_not_halted
+	when_active
+	avoid_dust
 	{
 		uint price = currentPrice();
 		uint tokens = msg.value / price;
@@ -56,17 +56,17 @@ contract DutchAuction {
 		// if we've asked for too many, send back the extra.
 		if (tokens > tokensAvailable()) {
 			refund = (tokens - tokensAvailable()) * price;
-            // add refund to sender's balance
-            // withdraw using withdrawRefund(address _who)
-            refundBalances[msg.sender] = refund;
+			// add refund to sender's balance
+			// withdraw using withdrawRefund(address _who)
+			refundBalances[msg.sender] = refund;
 			tokens = tokensAvailable();
 			accepted -= refund;
 		}
 
 		// send rest to treasury
-        // withdraw using treasuryWithdrawal(address _treasury)
-        treasuryBalance[treasury] += accepted;
-
+		// withdraw using treasuryWithdrawal(address _treasury)
+		treasuryBalance[treasury] += accepted;
+		
 		// record the acceptance.
 		participants[msg.sender] += accepted;
 		totalReceived += accepted;
@@ -77,47 +77,47 @@ contract DutchAuction {
 		Buyin(msg.sender, price, accepted, refund);
 	}
 
-    function withdrawRefund(address _who)
+	function withdrawRefund(address _who)
+	    public
 		only_participants(_who)
-        public
-    {
-        require(refundBalances[_who] > 0);
-
-        uint ref = refundBalances[_who];
-        refundBalances[_who] = 0;
-        require(_who.transfer(ref));
-    }
-
-    function withdrawTokens(address _who)
-        only_participants(_who)
-        when_all_finalised
-        public
-    {
-        assert(tokenBalances[_who] > 0);
-
-        uint tk = tokenBalances[_who];
-        tokenBalances[_who] = 0;
-        require(_who.transfer(tk));
-    }
-
-    function treasuryWithdrawal(address _treasury)
-        only_treasury
-        public
-    {
-        require(treasuryBalance[_treasury] > 0);
-
-        uint ref = refundBalances[_treasury];
-        refundBalances[_treasury] = 0;
-        require(_treasury.transfer(ref));
-    } 
+	{
+	    require(refundBalances[_who] > 0);
+	
+	    uint ref = refundBalances[_who];
+	    refundBalances[_who] = 0;
+	    require(_who.transfer(ref));
+	}
+	
+	function withdrawTokens(address _who)
+		public
+		only_participants(_who)
+		when_all_finalised
+	{
+		assert(tokenBalances[_who] > 0);
+		
+		uint tk = tokenBalances[_who];
+		tokenBalances[_who] = 0;
+		require(_who.transfer(tk));
+	}
+	
+	function treasuryWithdrawal(address _treasury)
+		public
+		only_treasury
+	{
+		require(treasuryBalance[_treasury] > 0);
+		
+		uint ref = refundBalances[_treasury];
+		refundBalances[_treasury] = 0;
+		require(_treasury.transfer(ref));
+	} 
 
 
 	/// Mint tokens for a particular participant.
 	function finalise(address _who)
+		public
 		when_not_halted
 		when_ended
 		only_participants(_who)
-        public
 	{
 		// end the auction if we're the first one to finalise.
 		if (endPrice == 0) {
@@ -132,7 +132,7 @@ contract DutchAuction {
 		participants[_who] = 0;
         // changed to withdraw pattern
         // use withdawTokens(address _who) 
-        tokenBalances[_who] = tokens;
+		tokenBalances[_who] = tokens;
 
 		Finalised(_who, tokens);
 
@@ -142,102 +142,141 @@ contract DutchAuction {
 	}
 
 	/// Emergency function to pause buy-in and finalisation.
-	function setHalted(bool _halted) only_admin { halted = _halted; }
+	function setHalted(bool _halted)
+		public
+		only_admin
+	{ 
+		halted = _halted;
+	}
 
 	/// Emergency function to drain the contract of any funds.
-	function drain() only_admin { require(treasury.transfer(this.balance)); }
+	function drain()
+		public
+		only_admin
+	{
+		require(treasury.transfer(this.balance));
+	}
 
 	/// Kill this contract once the sale is finished.
-	function kill() when_all_finalised { suicide(admin); }
+	function kill()
+		public
+		when_all_finalised
+	{
+		suicide(admin);
+	}
 
 	/// The current price for a single token. If a buyin happens now, this is
 	/// the highest price per token that the buyer will pay.
-	function currentPrice() constant returns (uint weiPerToken) {
+	function currentPrice()
+		constant
+	   	public
+		returns (uint weiPerToken)
+	{
 		if (!isActive()) return 0;
 		return beginPrice - (now - beginTime) * saleSpeed;
 	}
 
 	/// Returns the tokens available for purchase right now.
-	function tokensAvailable() constant returns (uint tokens) {
+	function tokensAvailable()
+		constant
+		public
+		returns (uint tokens)
+	{
 		if (!isActive()) return 0;
 		return tokenCap - totalReceived / currentPrice();
 	}
 
 	/// The largest purchase than can be made at present.
-	function maxPurchase() constant returns (uint spend) {
+	function maxPurchase()
+		constant
+		public
+		returns (uint spend)
+	{
 		if (!isActive()) return 0;
 		return tokenCap * currentPrice() - totalReceived;
 	}
 
 	/// True if the sale is ongoing.
-	function isActive() constant returns (bool) { return now >= beginTime && now < endTime; }
+	function isActive()
+		constant
+		public
+		returns (bool)
+	{
+		return now >= beginTime && now < endTime;
+	}
 
 	/// True if all participants have finalised.
-	function allFinalised() constant returns (bool) { return now >= endTime && totalReceived == totalFinalised; }
+	function allFinalised()
+		constant
+		public
+		returns (bool)
+	{
+		return now >= endTime && totalReceived == totalFinalised;
+	}
 
 	/// Ensure the sale is ongoing.
 	modifier when_active
-    {
-        require(isActive());
-        _;
-    }
-
+	{
+		require(isActive());
+		_;
+	}
+	
 	/// Ensure the sale is ended.
 	modifier when_ended
-    {
-        require(now >= endTime);
-        _;
-    }
-
+	{
+		require(now >= endTime);
+		_;
+	}
+	
 	/// Ensure we're not halted.
 	modifier when_not_halted
-    {
-        assert(!halted);
-        _;
-    }
-
+	{
+		assert(!halted);
+		_;
+	}
+	
 	/// Ensure all participants have finalised.
 	modifier when_all_finalised
-    {
-        require(allFinalised());
-        _;
-    }
-
+	{
+		require(allFinalised());
+		_;
+	}
+	
 	/// Ensure the sender sent a sensible amount of ether.
 	modifier avoid_dust
-    {
-        require(msg.value >= DUST_LIMIT);
-        _;
-    }
-
+	{
+		require(msg.value >= DUST_LIMIT);
+		_;
+	}
+	
 	/// Ensure `_who` is a participant.
 	modifier only_participants(address _who)
-    {
-        require(participants[_who] != 0);
-        _;
-    }
-
+	{
+		require(participants[_who] != 0);
+		_;
+	}
+	
 	/// Ensure sender is admin.
 	modifier only_admin
-    {
-        require(msg.sender == admin);
-        _;
-    }
-
-    /// Ensure sender is treasury
+	{
+		require(msg.sender == admin);
+		_;
+	}
+	
+	/// Ensure sender is treasury
 	modifier only_treasury
-    {
-        require(msg.sender == treasury);
-        _;
-    }
+	{
+		require(msg.sender == treasury);
+		_;
+	}
 
 	// State:
 
 	/// The auction participants.
 	mapping (address => uint) public participants;
-    mapping (address => uint) public refundBalances;
-    mapping (address => uint) public tokenBalances;
-    mapping (address => uint) public treasuryBalance;
+	mapping (address => uint) public refundBalances;
+	mapping (address => uint) public tokenBalances;
+	mapping (address => uint) public treasuryBalance;
 
 	/// Total amount of ether received.
 	uint public totalReceived = 0;
