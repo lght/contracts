@@ -1,13 +1,13 @@
-import {increaseTimeTo, duration} from '../helpers/increaseTime.js';
-import {assertEvent, assertNoEvent} from '../helpers/assertEvent.js';
+import {increasetimeto, duration} from '../helpers/increaseTime.js';
+import {assertevent, assertnoevent} from '../helpers/assertEvent.js';
 
-const Promise = require("bluebird");
-const Wallet = artifacts.require("./Wallet.sol");
+const promise = require("bluebird");
+const wallet = artifacts.require("./Wallet.sol");
 
-const getBlockNumber = Promise.promisify(web3.eth.getBlockNumber);
-const getBlock = Promise.promisify(web3.eth.getBlock);
+const getblocknumber = promise.promisify(web3.eth.getBlockNumber);
+const getblock = promise.promisify(web3.eth.getBlock);
 
-contract('MultiSig Wallet', function(accounts) {
+contract('multisig wallet', function(accounts) {
   let defaultUser = web3.eth.accounts[0];
   let signer1 = web3.eth.accounts[1];
   let signer2 = web3.eth.accounts[2];
