@@ -43,10 +43,10 @@ contract DutchAuction {
 	/// funds if they would end the sale.
 	function()
 		payable
-	public
-	when_not_halted
-	when_active
-	avoid_dust
+		public
+		when_not_halted
+		when_active
+		avoid_dust
 	{
 		uint price = currentPrice();
 		uint tokens = msg.value / price;
@@ -82,8 +82,6 @@ contract DutchAuction {
 		only_participants(_who)
 	{
 	    require(refundBalances[_who] > 0);
-	
-	    uint ref = refundBalances[_who];
 	    refundBalances[_who] = 0;
 	    require(_who.transfer(ref));
 	}
@@ -97,7 +95,8 @@ contract DutchAuction {
 		
 		uint tk = tokenBalances[_who];
 		tokenBalances[_who] = 0;
-		require(_who.transfer(tk));
+		// transfer tokens to _who
+		require(tokenContract.transfer(_who, tk));
 	}
 	
 	function treasuryWithdrawal(address _treasury)
