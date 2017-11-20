@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "./interfaces/OperationsFace.sol";
+import {OperationsProxyFace} from "./interfaces/OperationsFace.sol";
 
 /// Specialise proxy wallet. Owner can send transactions unhindered. Delegates
 /// can send only particular transactions to a named Operations contract.
@@ -15,7 +15,7 @@ contract OperationsProxy {
 		confirmer[1] = _stableConfirmer;
 		confirmer[2] = _betaConfirmer;
 		confirmer[3] = _nightlyConfirmer;
-		operations = OperationsFace(_operations);
+		operations = OperationsProxyFace(_operations);
 	}
 	
 	event Sent(address indexed to, uint value, bytes data);
@@ -165,5 +165,5 @@ contract OperationsProxy {
 	mapping(uint8 => address) public confirmer;
 	mapping(uint8 => mapping(bytes32 => bytes)) public waiting;
 	mapping(bytes32 => uint8) public trackOfPendingRelease;
-	OperationsFace public operations;
+	OperationsProxyFace public operations;
 }

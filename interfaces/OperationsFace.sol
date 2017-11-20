@@ -17,6 +17,8 @@ interface OperationsFace {
 	function build(bytes32 _client, bytes32 _checksum) constant public returns (bytes32 o_release, bytes32 o_platform);
 	function release(bytes32 _client, bytes32 _release) constant public returns (uint32 o_forkBlock, uint8 o_track, uint24 o_semver, bool o_critical);
 	function checksum(bytes32 _client, bytes32 _release, bytes32 _platform) constant public returns (bytes32);
+}
 
-	function clientOwner(address _owner) constant public returns (bytes32);
+contract OperationsProxyFace is OperationsFace {
+    function clientOwner(address _owner) constant public returns (bytes32);
 }
