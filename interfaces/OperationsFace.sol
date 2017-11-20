@@ -20,5 +20,5 @@ interface OperationsFace {
 }
 
 contract OperationsProxyFace is OperationsFace {
-    function clientOwner(address _owner) constant public returns (bytes32);
+	function clientOwner(address _owner) constant public returns (bytes32);
 }

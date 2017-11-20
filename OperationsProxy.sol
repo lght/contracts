@@ -6,7 +6,7 @@ import {OperationsProxyFace} from "./interfaces/OperationsFace.sol";
 /// can send only particular transactions to a named Operations contract.
 contract OperationsProxy {
 	function OperationsProxy(address _owner, address _stable, address _beta, address _nightly, address _stableConfirmer, address _betaConfirmer, address _nightlyConfirmer, address _operations)
-	    internal
+		internal
 	{
 		owner = _owner;
 		delegate[1] = _stable;
@@ -32,7 +32,7 @@ contract OperationsProxy {
 		public
 		only_owner
 	{
-	    relay();
+		relay();
 	}
 	
 	function send(address _to, uint _value, bytes _data)
@@ -118,8 +118,8 @@ contract OperationsProxy {
 		public
 		only_confirmer_of_track(_track) 
 	{
-	    delete waiting[_track][_hash];
-	    RequestRejected(_track, _hash);
+		delete waiting[_track][_hash];
+		RequestRejected(_track, _hash);
 	}
 	
 	function relay()
