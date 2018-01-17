@@ -12,4 +12,4 @@ matrix:
       script:
         - yarn run ci
       after_script:
-        - cat coverage/lcov.info | yarn run coveralls
+        - cat coverage/lcov.info | yarn run coverall
