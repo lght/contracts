@@ -2,7 +2,7 @@ matrix:
   include:
     - language: python
       python: 2.7
-      install: pip install manticore --user
+      install: pip install manticore
       script:
         - cd tests/manticore
         - python operations-concrete-unit-tests.py
